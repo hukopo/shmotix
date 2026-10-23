@@ -3,8 +3,7 @@
 import re, struct, zlib
 
 CAT = re.search(r"const SIT = `\n(.*?)`", open("ui/index.html").read(), re.S).group(1).strip().split("\n")
-COLORS = {"o": (0, 0, 0), "#": (35, 32, 40), "s": (74, 67, 82), "P": (248, 138, 124), "n": (164, 80, 94),
-          "m": (140, 32, 56), "t": (232, 80, 95), "r": (232, 169, 58), "k": (20, 18, 22), "W": (255, 255, 255)}
+COLORS = {"o": (3, 3, 3), "#": (40, 40, 40), "W": (255, 255, 255), "n": (244, 160, 180)}  # тень g не рисуем
 
 
 def png(path, pixels):
@@ -18,7 +17,7 @@ def png(path, pixels):
 
 def render(size, color, bg=(0, 0, 0, 0)):
     """Котик по центру квадрата size×size, целый масштаб пикселя."""
-    scale = size * 3 // 4 // len(CAT[0])
+    scale = size * 3 // 4 // max(len(CAT), len(CAT[0]))
     ox, oy = (size - len(CAT[0]) * scale) // 2, (size - len(CAT) * scale) // 2
     out = [[bg] * size for _ in range(size)]
     for y, row in enumerate(CAT):
@@ -31,5 +30,5 @@ def render(size, color, bg=(0, 0, 0, 0)):
 
 
 # трей — template-силуэт: macOS сама красит под тему
-png("src-tauri/icons/tray.png", render(44, lambda ch: (0, 0, 0, 255) if ch != "." else None))
-png("scripts/app-icon.png", render(1024, lambda ch: COLORS[ch] + (255,) if ch != "." else None, (242, 233, 216, 255)))
+png("src-tauri/icons/tray.png", render(44, lambda ch: (0, 0, 0, 255) if ch in COLORS else None))
+png("scripts/app-icon.png", render(1024, lambda ch: COLORS[ch] + (255,) if ch in COLORS else None, (242, 233, 216, 255)))

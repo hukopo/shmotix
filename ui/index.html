@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <title>Shmotix</title>
 <style>
-  :root { --cat: 112px; --strip: 0px; }
+  :root { --cat: 96px; --strip: 0px; }
   html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; user-select: none;
                font-family: ui-rounded, system-ui, sans-serif; }
   body:not(.overlay) { --strip: 56px; }
@@ -22,15 +22,15 @@
            justify-content: center; text-align: center; padding: 0 16px; box-sizing: border-box; overflow: hidden; }
   body.overlay #strip { display: none; }
   /* режим перекрытия: тёмная плашка поверх оригинальных субтитров, только когда есть перевод */
-  body.overlay #hole.on { background: rgba(14, 14, 20, .92); }
+  body.overlay #hole.on { background: rgba(14, 14, 20, .97); }
   #grip { position: absolute; right: 6px; bottom: 2px; color: rgba(200, 200, 210, .5); cursor: nwse-resize;
           font-size: 13px; }
   body.collapsed #lens { display: none; }
 
   /* котик */
-  #pet { position: absolute; right: 4px; bottom: 2px; width: 104px; height: 88px; cursor: grab; }
+  #pet { position: absolute; right: 4px; bottom: 2px; width: 87px; height: 102px; cursor: grab; }
   body.nocat #pet { display: none; }
-  #pet canvas { width: 104px; height: 88px; image-rendering: pixelated; transform-origin: 50% 100%;
+  #pet canvas { width: 87px; height: 102px; image-rendering: pixelated; transform-origin: 50% 100%;
                 filter: drop-shadow(1px 0 #f4eee6) drop-shadow(-1px 0 #f4eee6) drop-shadow(0 1px #f4eee6)
                         drop-shadow(0 -1px #f4eee6) drop-shadow(0 2px 3px #0006); }
   .sleep canvas   { animation: breathe 2.6s ease-in-out infinite; }
@@ -71,7 +71,7 @@
     <span id="grip">◢</span>
   </div>
   <div id="pet" title="тяни — двигать · клик — поиграть · зажми — мяу · двойной клик — свернуть">
-    <canvas id="cv" width="26" height="22"></canvas>
+    <canvas id="cv" width="29" height="34"></canvas>
   </div>
 <script>
   const { event, window: w, dpi, core } = window.__TAURI__;
@@ -136,7 +136,7 @@
   grip.onpointerup = () => { grip.onpointermove = null; };
 
   /* ---------- свернуть до котика: котик остаётся на месте, окно сжимается вокруг него ---------- */
-  const MINI = { w: 170, h: 140 };  // запас слева и сверху под пузырь «мяу»
+  const MINI = { w: 230, h: 190 };  // запас слева и сверху под пузырь «мяу»
   let saved = null;
   async function toggleCollapse() {
     const k = await win.scaleFactor();
@@ -156,76 +156,61 @@
     sendRegion();
   }
 
-  /* ---------- котик: пиксельные кадры 26×22 (SIT читает scripts/make-cat.py для иконок) ---------- */
-  // o контур, # шерсть, s светлая шерсть, P розовый, n нос, m рот, t язык, r радужка, k зрачок, W блик
+  /* ---------- котик: пиксельные кадры 29×34 (SIT читает scripts/make-cat.py для иконок) ---------- */
+  // o контур, # шерсть, W белки, n нос/язык, g тень, . прозрачно
   const SIT = `
-...o...............o......
-..o#o.............o#o.....
-..o#Po...........oP#o.....
-.o#PPo...........oPP#o....
-.o#PPPoooooooooooPPP#o....
-.o###################o....
-.o##rrrrr#####rrrrr##o....
-.o#rWWkkkr###rWWkkkr#o....
-.o#rWWkkkr###rWWkkkr#o....
-.o#rkkkkkr###rkkkkkr#o....
-.o#rkkkWkr###rkkkWkr#o....
-.o##rrrrr##n##rrrrr##o....
-.o##PP#####m#####PP##o....
-..o#################o.....
-...o###############o..ooo.
-..o#################o.o##o
-.o###################oo##o
-.o###################o###o
-o#####################o##o
-o####################o##o.
-o######################o..
-.ooooooooooooooooooooooo..`;
-  const SLEEP = `
-..........................
-..........................
-..........................
-..........................
-..........................
-..........................
-..........................
-..........................
-..o.......o...............
-.o#o.....o#o..............
-.o#Po...oP#o..oooooooo....
-o#PP#ooo#PP#oo########oo..
-o######################o..
-o#######################o.
-o#r##r#r##r#############o.
-o##rr###rr##############o.
-o#P#####P###############o.
-o######oooooooooooo#####o.
-o#####osssssssssssso####o.
-.o####oooooooooooooo####o.
-..oooooooooooooooooooooo..
-..........................`;
+.....o............o..........
+....o#o..........o#o.........
+....o##o........o##o.........
+...o###o........o###o........
+...o####o......o####o........
+...o##o#oooooooo#o##o........
+...o###o########o###o........
+...o################o........
+...o################o........
+..o##################o.......
+..o###WWW######WWW###o.......
+..o##WoooW####WoooW##o.......
+.o###WooWW####WooWW###o......
+.ooo#WoooW####WoooW#ooo......
+..o###WWW##nn##WWW###o.......
+.ooo#######o########ooo.oo...
+....o#####o#oo#####o...o##o..
+.....ooo#########oo....o##o..
+....o###o######ooo.....o##o..
+...o####o########o.....o##o..
+...o###o##########o....o##o..
+...o##############o....o##o..
+...o######o####o##o...o##o...
+....o##o##o####o###o..o##o...
+.....oo###o####o###o.o##o....
+....o#####o####oo##oo###o....
+....o#####o###o#####o##o.....
+....o#####o###o#####o#o......
+....o#####o##oo#####oo.......
+.....o###o###ooo####o........
+....o####o###o#####o.........
+ggggoooooo##oooooooggggg.....
+..gggggggoooogggggggg........
+.......gggggggggg............`;
   const rows = m => m.trim().split('\n');
   const edit = (m, patch) => rows(m).map((l, i) => patch[i] ?? l).join('\n');
-  const B = '.o###################o....', NOSE = '.o#########n#########o....';
-  const HAPPY = { 6: B, 7: B, 8: '.o####r#########r####o....', 9: '.o###r#r#######r#r###o....', 10: B, 11: NOSE };  // глазки ^ ^
   const F = {
     sit: SIT,
-    sleep: SLEEP,
-    blink: edit(SIT, { 6: B, 7: B, 8: B, 9: '.o#r#####r###r#####r#o....', 10: '.o##rrrrr#####rrrrr##o....', 11: NOSE }),
-    happy: edit(SIT, HAPPY),
-    meow: edit(SIT, { ...HAPPY, 12: '.o##PP####mmm####PP##o....', 13: '..o#######mtm#######o.....' }),
-    look: edit(SIT, { 7: '.o#rkkWWkr###rkkWWkr#o....', 8: '.o#rkkWWkr###rkkWWkr#o....', 10: '.o#rWkkkkr###rWkkkkr#o....' }),
-    ear: edit(SIT, { 0: '...o......................', 1: '..o#o.............ooo.....', 2: '..o#Po...........o##o.....' }),
-    lick1: edit(SIT, { ...HAPPY, 12: '.o##PP#####t#####PP##o....', 13: '..o########t########o.....' }),
-    lick2: edit(SIT, HAPPY),
-    tail: edit(SIT, { 14: '...o###############o.ooo..', 15: '..o#################oo##o.', 16: '.o###################o##o.',
-                      17: '.o###################o###o' }),
+    blink: edit(SIT, { 10: '..o##################o.......', 11: '..o##################o.......', 12: '.o###ooooo####ooooo###o......', 13: '.ooo################ooo......', 14: '..o########nn########o.......' }),
+    sleep: edit(SIT, { 10: '..o##################o.......', 11: '..o##################o.......', 12: '.o###o###o####o###o###o......', 13: '.ooo##ooo######ooo##ooo......', 14: '..o########nn########o.......' }),
+    happy: edit(SIT, { 10: '..o##################o.......', 11: '..o####o########o####o.......', 12: '.o####o#o######o#o####o......', 13: '.ooo#o###o####o###o#ooo......', 14: '..o########nn########o.......' }),
+    look: edit(SIT, {  }),
+    meow: edit(SIT, { 10: '..o##################o.......', 11: '..o####o########o####o.......', 12: '.o####o#o######o#o####o......', 13: '.ooo#o###o####o###o#ooo......', 14: '..o########nn########o.......', 15: '.ooo######ono#######ooo.oo...', 16: '....o#####nnno#####o...o##o..' }),
+    lick1: edit(SIT, { 10: '..o##################o.......', 11: '..o####o########o####o.......', 12: '.o####o#o######o#o####o......', 13: '.ooo#o###o####o###o#ooo......', 14: '..o########nn########o.......', 16: '....o#####onoo#####o...o##o..', 17: '.....ooo###n#####oo....o##o..' }),
+    lick2: edit(SIT, { 10: '..o##################o.......', 11: '..o####o########o####o.......', 12: '.o####o#o######o#o####o......', 13: '.ooo#o###o####o###o#ooo......', 14: '..o########nn########o.......' }),
+    ear: edit(SIT, { 0: '.....o.......................', 1: '....o#o...........o..........', 2: '....o##o.........o#o.........', 3: '...o###o........o##o.........', 4: '...o####o.......o###o........', 5: '...o##o#oooooooo####o........' }),
+    tail: edit(SIT, { 15: '.ooo#######o########oo.o.oo..', 16: '....o#####o#oo#####o....o##o.', 17: '.....ooo#########oo.....o##o.', 18: '....o###o######ooo......o##o.', 19: '...o####o########o......o##o.', 20: '...o###o##########o.....o##o.', 21: '...o##############o.....o##o.', 22: '...o######o####o##o....o##o..', 23: '....o##o##o####o###o...o##o..' }),
   };
-  const COLORS = { o: '#000', '#': '#232028', s: '#4a4352', P: '#f88a7c', n: '#a4505e', m: '#8c2038', t: '#e8505f',
-                   r: '#e8a93a', k: '#141216', W: '#fff' };
+  const COLORS = { o: '#030303', '#': '#282828', W: '#fff', n: '#f4a0b4', g: 'rgba(0,0,0,.25)' };
   const ctx = $('cv').getContext('2d');
   function draw(name) {
-    ctx.clearRect(0, 0, 26, 22);
+    ctx.clearRect(0, 0, 29, 34);
     rows(F[name]).forEach((row, y) => [...row].forEach((ch, x) => {
       if (COLORS[ch]) { ctx.fillStyle = COLORS[ch]; ctx.fillRect(x, y, 1, 1); }
     }));
@@ -235,7 +220,7 @@ o#####osssssssssssso####o.
   function fx(cls, txt, dx = 30, dy = 6) {  // dx — от правого края котика влево
     const el = document.createElement('div');
     el.className = 'fx ' + cls; el.textContent = txt;
-    el.style.right = (6 + dx) + 'px'; el.style.bottom = (86 + dy) + 'px';
+    el.style.right = (6 + dx) + 'px'; el.style.bottom = (100 + dy) + 'px';
     body.appendChild(el);
     setTimeout(() => el.remove(), 1900);
   }
@@ -288,7 +273,7 @@ o#####osssssssssssso####o.
     if (mood === 'sleep') { if (tick % 5 === 0) fx('zz', tick % 10 ? 'z' : 'Z', 10, -20); return; }
     if (now < busyUntil) return;
     if (now - lastPet > (body.classList.contains('collapsed') ? 10000 : 30000)) {
-      mood = 'sleep'; pet.className = 'sleep'; draw('sleep'); return;  // свернулся клубочком
+      mood = 'sleep'; pet.className = 'sleep'; draw('sleep'); return;  // задремал
     }
     if (tick % 18 === 0) return pick([REACTIONS.lick, REACTIONS.ear, () => act([['look', 900]])])();  // сам себя развлекает
     draw(Math.random() < .1 ? 'blink' : tick % 2 ? 'tail' : 'sit');
