@@ -1,0 +1,45 @@
+# Windows-сборка: на каждый релиз (его создаёт scripts/release.sh) прикрепляет установщик .exe.
+name: windows
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Тег релиза, к которому прикрепить установщик"
+        required: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - name: Модели
+        shell: bash
+        run: ./scripts/fetch-models.sh
+      - run: npm ci
+      - name: Тест OCR + перевода
+        working-directory: src-tauri
+        run: cargo test --release
+      - run: npx tauri build --bundles nsis
+      - name: Прикрепить к релизу
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V="${TAG#v}"
+          cp src-tauri/target/release/bundle/nsis/*.exe "Shmotix-$V-windows-x64-setup.exe"
+          gh release upload "$TAG" "Shmotix-$V-windows-x64-setup.exe" --clobber
