@@ -38,8 +38,9 @@ impl Engine {
     /// Пустая строка — текста в кадре нет.
     pub fn process(&mut self, img: &RgbImage) -> Result<String> {
         let text = self.read_text(img)?;
-        if text.is_empty() {
-            return Ok(text);
+        // шум с фона (камни, иконки) OCR читает как «x O.» — такое не переводим
+        if text.chars().filter(|c| c.is_alphabetic()).count() < 3 {
+            return Ok(String::new());
         }
         if text != self.last_src {
             // субтитр тот же — переводчик не дёргаем
