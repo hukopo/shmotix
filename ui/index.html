@@ -4,29 +4,242 @@
 <meta charset="utf-8">
 <title>Shmotix</title>
 <style>
-  /* BORDER=3px и BAR=60px продублированы в src-tauri/src/lib.rs */
-  html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; user-select: none; }
-  #lens { position: absolute; inset: 0 0 60px 0; border: 3px solid #00c853; border-bottom: 0; }
-  #bar { position: absolute; left: 0; right: 0; bottom: 0; height: 60px; background: #111d; color: #fff;
-         font: 18px/1.3 system-ui, sans-serif; display: flex; align-items: center; justify-content: center;
-         text-align: center; padding: 0 28px; box-sizing: border-box; cursor: move; }
-  #grip { position: absolute; right: 2px; bottom: 0; color: #888; cursor: nwse-resize; font-size: 18px; }
-  #close { position: absolute; left: 8px; bottom: 38px; color: #00c853; cursor: pointer; font: 16px system-ui; }
+  :root { --cat: 76px; --strip: 0px; }
+  html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; user-select: none;
+               font-family: ui-rounded, system-ui, sans-serif; }
+  body:not(.overlay) { --strip: 56px; }
+  body.nocat { --cat: 0px; }
+
+  /* рамка: еле видимая, скруглённая */
+  #lens { position: absolute; left: var(--cat); top: 0; right: 0; bottom: 0; border-radius: 18px;
+          border: 1px solid rgba(190, 190, 200, .28); transition: border-color .3s; }
+  body:hover #lens { border-color: rgba(190, 190, 200, .6); }
+  #hole { position: absolute; inset: 0 0 var(--strip) 0; border-radius: 18px; display: flex;
+          align-items: center; justify-content: center; text-align: center; overflow: hidden;
+          color: #fff; padding: 4px 14px; box-sizing: border-box; }
+  #strip { position: absolute; left: 0; right: 0; bottom: 0; height: var(--strip); border-radius: 16px;
+           background: rgba(16, 16, 22, .85); color: #fff; display: flex; align-items: center;
+           justify-content: center; text-align: center; padding: 0 16px; box-sizing: border-box; overflow: hidden; }
+  body.overlay #strip { display: none; }
+  /* режим перекрытия: тёмная плашка поверх оригинальных субтитров, только когда есть перевод */
+  body.overlay #hole.on { background: rgba(14, 14, 20, .92); }
+  #grip { position: absolute; right: 6px; bottom: 2px; color: rgba(200, 200, 210, .5); cursor: nwse-resize;
+          font-size: 13px; }
+  body.collapsed #lens { display: none; }
+
+  /* котик */
+  #pet { position: absolute; left: 6px; bottom: 4px; width: 64px; height: 64px; cursor: grab; }
+  body.nocat #pet { display: none; }
+  #pet canvas { width: 64px; height: 64px; image-rendering: pixelated; transform-origin: 50% 100%;
+                filter: drop-shadow(1px 0 #f4eee6) drop-shadow(-1px 0 #f4eee6) drop-shadow(0 1px #f4eee6)
+                        drop-shadow(0 -1px #f4eee6) drop-shadow(0 2px 3px #0006); }
+  .sleep canvas { animation: breathe 2.4s ease-in-out infinite; }
+  .hop canvas { animation: hop .5s cubic-bezier(.3, 1.8, .5, 1); }
+  .stretch canvas { animation: stretch .8s ease-out; }
+  @keyframes breathe { 50% { transform: scale(1.04, .95); } }
+  @keyframes hop { 40% { transform: translateY(-14px) scale(.95, 1.08); } 80% { transform: scale(1.1, .9); } }
+  @keyframes stretch { 30% { transform: scale(1.25, .8); } 65% { transform: scale(.9, 1.12); } }
+
+  .fx { position: absolute; pointer-events: none; font-weight: 700; animation: float 1.6s ease-out forwards; }
+  .zz { color: #cfd8ff; font-size: 13px; text-shadow: 0 0 3px #0008; }
+  .heart { color: #ff7aa8; font-size: 16px; text-shadow: 0 0 3px #0006; }
+  .meow { background: #fff; color: #222; font-size: 12px; padding: 3px 8px; border-radius: 12px;
+          box-shadow: 0 2px 6px #0004; animation-duration: 1.4s; }
+  @keyframes float { 0% { opacity: 0; transform: translate(0, 6px) scale(.6); } 20% { opacity: 1; transform: none; }
+                     100% { opacity: 0; transform: translate(10px, -26px) scale(1.1); } }
 </style>
 </head>
-<body>
-  <div id="lens"></div>
-  <span id="close" title="Закрыть (Esc)">✕</span>
-  <div id="bar" data-tauri-drag-region>Наведи рамку на субтитры…</div>
-  <span id="grip">◢</span>
+<body class="overlay">
+  <div id="lens">
+    <div id="hole"><span id="say"></span></div>
+    <div id="strip">Наведи рамку на субтитры…</div>
+    <span id="grip">◢</span>
+  </div>
+  <div id="pet"><canvas id="cv" width="16" height="16"></canvas></div>
 <script>
-  const { event, window: w } = window.__TAURI__;
+  const { event, window: w, dpi, core } = window.__TAURI__;
   const win = w.getCurrentWindow();
-  const bar = document.getElementById('bar');
-  event.listen('subtitle', e => { bar.textContent = e.payload; });
-  document.getElementById('grip').onmousedown = () => win.startResizeDragging('SouthEast');
-  document.getElementById('close').onclick = () => win.close();
-  addEventListener('keydown', e => e.key === 'Escape' && win.close());
+  const $ = id => document.getElementById(id);
+  const body = document.body, hole = $('hole'), say = $('say'), strip = $('strip'), pet = $('pet');
+
+  /* ---------- перевод ---------- */
+  let text = '', clearTimer;
+  function fit(el, max) {  // уменьшаем шрифт, пока текст не влезет
+    let s = max;
+    el.style.fontSize = s + 'px';
+    while (s > 9 && (el.scrollHeight > el.clientHeight || el.scrollWidth > el.clientWidth)) el.style.fontSize = --s + 'px';
+  }
+  function render() {
+    const overlay = body.classList.contains('overlay');
+    say.textContent = overlay ? text : '';
+    hole.classList.toggle('on', overlay && !!text);
+    if (!overlay && text) strip.textContent = text;
+    fit(overlay ? hole : strip, overlay ? 34 : 20);
+  }
+  event.listen('subtitle', e => {
+    clearTimeout(clearTimer);
+    if (!e.payload) { clearTimer = setTimeout(() => { text = ''; render(); }, 1500); return; } // OCR моргнул — не мигаем
+    if (e.payload !== text) { text = e.payload; render(); cheer(); }
+  });
+
+  /* ---------- область захвата → Rust ---------- */
+  function sendRegion() {
+    if (body.classList.contains('collapsed')) return core.invoke('set_region', { x: 0, y: 0, w: 0, h: 0 });
+    const r = hole.getBoundingClientRect();
+    core.invoke('set_region', { x: r.left, y: r.top, w: r.width, h: r.height });
+  }
+  addEventListener('resize', () => { render(); sendRegion(); });
+  sendRegion();
+
+  event.listen('settings', e => {
+    body.classList.toggle('nocat', !e.payload.cat);
+    body.classList.toggle('overlay', e.payload.overlay);
+    // без котика тащим за саму рамку
+    e.payload.cat ? $('lens').removeAttribute('data-tauri-drag-region') : $('lens').setAttribute('data-tauri-drag-region', '');
+    if (!e.payload.cat && body.classList.contains('collapsed')) toggleCollapse();
+    render(); sendRegion();
+  });
+  addEventListener('keydown', e => e.key === 'Escape' && win.hide());
+
+  /* ---------- ресайз как прямоугольник в Paint: левый верхний угол — якорь ---------- */
+  const grip = $('grip');
+  grip.onpointerdown = async e => {
+    e.stopPropagation();
+    grip.setPointerCapture(e.pointerId);
+    const k = await win.scaleFactor(), p = await win.outerPosition();
+    const ax = p.x / k, ay = p.y / k;
+    grip.onpointermove = ev => {
+      win.setPosition(new dpi.LogicalPosition(Math.min(ax, ev.screenX), Math.min(ay, ev.screenY)));
+      win.setSize(new dpi.LogicalSize(Math.max(240, Math.abs(ev.screenX - ax)), Math.max(90, Math.abs(ev.screenY - ay))));
+    };
+  };
+  grip.onpointerup = () => { grip.onpointermove = null; };
+
+  /* ---------- свернуть до котика: котик остаётся на месте, окно сжимается вокруг него ---------- */
+  const MINI = { w: 82, h: 110 };
+  let saved = null;
+  async function toggleCollapse() {
+    const k = await win.scaleFactor();
+    const p = (await win.outerPosition()).toLogical(k), s = (await win.innerSize()).toLogical(k);
+    if (!saved) {
+      saved = { w: s.width, h: s.height };
+      body.classList.add('collapsed');
+      await win.setSize(new dpi.LogicalSize(MINI.w, MINI.h));
+      await win.setPosition(new dpi.LogicalPosition(p.x, p.y + s.height - MINI.h));
+      say.textContent = '';
+    } else {
+      await win.setPosition(new dpi.LogicalPosition(p.x, p.y - (saved.h - s.height)));
+      await win.setSize(new dpi.LogicalSize(saved.w, saved.h));
+      saved = null;
+      body.classList.remove('collapsed');
+      wake();
+    }
+    sendRegion();
+  }
+
+  /* ---------- котик: пиксельные кадры ---------- */
+  // # шерсть, Y глаза, - закрытые глаза, P румянец/ротик, . прозрачно
+  const SIT = `
+................
+...#......#.....
+...##....##.....
+...########.....
+..##########....
+..##Y####Y##....
+..#P######P#....
+...########.....
+...########.....
+..##########....
+..##########..#.
+..##########..#.
+..##########.##.
+..############..
+...##.####.##...
+................`;
+  const lines = m => m.trim().split('\n');
+  const swap = (m, row, str) => lines(m).map((l, i) => i === row ? str : l).join('\n');
+  const F = {
+    sit: SIT,
+    tail: [[9, '..##########...#'], [10, '..##########..#.'], [11, '..##########.#..'], [12, '..##########.#..']]
+            .reduce((m, [r, s]) => swap(m, r, s), SIT),
+    blink: swap(SIT, 5, '..##-####-##....'),
+    meow: swap(SIT, 7, '...###PP###.....'),
+    sleep: `
+................
+................
+................
+................
+................
+................
+...#.#..........
+...#########....
+..############..
+..#-#-#########.
+..#P#P#########.
+..#############.
+..##############
+...###########..
+................
+................`,
+  };
+  const COLORS = { '#': '#17151a', Y: '#ffd400', '-': '#ffd400', P: '#ff8fb1' };
+  const ctx = $('cv').getContext('2d');
+  function draw(name) {
+    ctx.clearRect(0, 0, 16, 16);
+    lines(F[name]).forEach((row, y) => [...row].forEach((ch, x) => {
+      if (COLORS[ch]) { ctx.fillStyle = COLORS[ch]; ctx.fillRect(x, y, 1, 1); }
+    }));
+  }
+
+  /* ---------- котик: поведение ---------- */
+  let mood = 'sit', busyUntil = 0, lastPet = Date.now(), tick = 0;
+  function fx(cls, txt, dx = 34, dy = 4) {
+    const el = document.createElement('div');
+    el.className = 'fx ' + cls; el.textContent = txt;
+    el.style.left = (6 + dx) + 'px'; el.style.bottom = (60 + dy) + 'px';
+    body.appendChild(el);
+    setTimeout(() => el.remove(), 1700);
+  }
+  function play(cls, ms) {
+    pet.classList.remove('hop', 'stretch'); void pet.offsetWidth; pet.classList.add(cls);
+    setTimeout(() => pet.classList.remove(cls), ms);
+  }
+  function wake() {
+    lastPet = Date.now();
+    if (mood !== 'sleep') return;
+    mood = 'sit'; pet.classList.remove('sleep');
+    busyUntil = Date.now() + 1200; draw('meow');
+    play('stretch', 800); fx('meow', ['мяу~', 'мя?', 'ня!'][Math.random() * 3 | 0], 30, 2);
+  }
+  function cheer() {  // новый перевод — котик подпрыгивает
+    if (mood === 'sleep' || Date.now() < busyUntil) return;
+    play('hop', 500); fx('heart', '♥', 20 + Math.random() * 30);
+  }
+  setInterval(() => {
+    tick++;
+    const now = Date.now();
+    if (mood === 'sleep') { if (tick % 5 === 0) fx('zz', tick % 10 ? 'z' : 'Z', 40, 0); return; }
+    if (now - lastPet > (body.classList.contains('collapsed') ? 8000 : 25000)) {
+      mood = 'sleep'; pet.classList.add('sleep'); draw('sleep'); return;  // клубочком
+    }
+    if (now < busyUntil) return;
+    draw(Math.random() < .12 ? 'blink' : tick % 2 ? 'tail' : 'sit');
+  }, 450);
+  draw('sit');
+
+  /* ---------- котик: мышь. Тянуть — двигает окно, клик — свернуть/развернуть ---------- */
+  pet.onpointerenter = wake;
+  pet.onpointerdown = e => {
+    const sx = e.screenX, sy = e.screenY;
+    let dragged = false;
+    pet.onpointermove = ev => {
+      if (!dragged && Math.hypot(ev.screenX - sx, ev.screenY - sy) > 4) { dragged = true; win.startDragging(); }
+    };
+    pet.onpointerup = () => {
+      pet.onpointermove = pet.onpointerup = null;
+      if (!dragged) { toggleCollapse(); play('hop', 500); }
+    };
+  };
 </script>
 </body>
 </html>

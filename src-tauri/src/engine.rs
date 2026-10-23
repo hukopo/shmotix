@@ -46,6 +46,7 @@ impl Engine {
             // субтитр тот же — переводчик не дёргаем
             let out = self.tr.translate_batch(&[text.clone()], &TranslationOptions::default(), None)?;
             self.last_dst = out.into_iter().next().map(|r| r.0).unwrap_or_default();
+            eprintln!("{text} → {}", self.last_dst);
             self.last_src = text;
         }
         Ok(self.last_dst.clone())
