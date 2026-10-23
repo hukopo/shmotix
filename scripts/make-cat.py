@@ -17,7 +17,7 @@ def png(path, pixels):
 
 def render(size, color, bg=(0, 0, 0, 0)):
     """Котик по центру квадрата size×size, целый масштаб пикселя."""
-    scale = size * 3 // 4 // max(len(CAT), len(CAT[0]))
+    scale = max(1, size * 3 // 4 // max(len(CAT), len(CAT[0])))
     ox, oy = (size - len(CAT[0]) * scale) // 2, (size - len(CAT) * scale) // 2
     out = [[bg] * size for _ in range(size)]
     for y, row in enumerate(CAT):
@@ -30,5 +30,5 @@ def render(size, color, bg=(0, 0, 0, 0)):
 
 
 # трей — template-силуэт: macOS сама красит под тему
-png("src-tauri/icons/tray.png", render(44, lambda ch: (0, 0, 0, 255) if ch in COLORS else None))
+png("src-tauri/icons/tray.png", render(36, lambda ch: (0, 0, 0, 255) if ch in "o#" else None))  # глаза и нос — дырки
 png("scripts/app-icon.png", render(1024, lambda ch: COLORS[ch] + (255,) if ch in COLORS else None, (242, 233, 216, 255)))
