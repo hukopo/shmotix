@@ -1,4 +1,4 @@
-use shmotix_lib::engine::Engine;
+use shmotix_lib::engine::{is_noise, Engine};
 
 #[test]
 fn ocr_and_translate() {
@@ -9,4 +9,11 @@ fn ocr_and_translate() {
     println!("{ru}");
     assert!(!ru.is_empty() && ru.chars().any(|c| ('а'..='я').contains(&c.to_lowercase().next().unwrap())));
     assert_eq!(eng.process(&img).unwrap(), ru); // кэш повторного субтитра
+}
+
+#[test]
+fn noise_filter() {
+    assert!(is_noise("x O."));
+    assert!(is_noise("Cpena?? Safar? ?e?-6pay3epoM ??"));
+    assert!(!is_noise("Where are you going?"));
 }

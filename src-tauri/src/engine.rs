@@ -8,6 +8,14 @@ use image::RgbImage;
 use ocrs::{ImageSource, OcrEngine, OcrEngineParams};
 use rten::Model;
 
+/// Шум с фона (камни, иконки) OCR читает как «x O.», а нелатинский текст — как «Cpena??».
+/// Такое не переводим.
+pub fn is_noise(text: &str) -> bool {
+    let letters = text.chars().filter(|c| c.is_alphabetic()).count();
+    let unknown = text.chars().filter(|&c| c == '?').count();
+    letters < 3 || unknown * 5 > text.chars().count()
+}
+
 pub struct Engine {
     ocr: OcrEngine,
     tr: Translator<Tokenizer>,
@@ -38,15 +46,13 @@ impl Engine {
     /// Пустая строка — текста в кадре нет.
     pub fn process(&mut self, img: &RgbImage) -> Result<String> {
         let text = self.read_text(img)?;
-        // шум с фона (камни, иконки) OCR читает как «x O.» — такое не переводим
-        if text.chars().filter(|c| c.is_alphabetic()).count() < 3 {
+        if is_noise(&text) {
             return Ok(String::new());
         }
         if text != self.last_src {
             // субтитр тот же — переводчик не дёргаем
             let out = self.tr.translate_batch(&[text.clone()], &TranslationOptions::default(), None)?;
             self.last_dst = out.into_iter().next().map(|r| r.0).unwrap_or_default();
-            eprintln!("{text} → {}", self.last_dst);
             self.last_src = text;
         }
         Ok(self.last_dst.clone())

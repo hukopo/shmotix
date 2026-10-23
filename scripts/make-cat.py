@@ -1,26 +1,10 @@
-"""Рисует пиксельного котика: ui/cat.png, icons/tray.png и исходник app-иконки. Только stdlib."""
-import struct, sys, zlib
+"""Иконки из пиксельного котика SIT в ui/index.html: icons/tray.png и исходник app-иконки.
+Запуск: python3 scripts/make-cat.py && npx tauri icon scripts/app-icon.png. Только stdlib."""
+import re, struct, zlib
 
-CAT = """
-................
-...#......#.....
-...##....##.....
-...########.....
-..##########....
-..##Y####Y##....
-..##########....
-...########.....
-...########.....
-..##########....
-..##########..#.
-..##########..#.
-..##########.##.
-..############..
-...##.####.##...
-................
-"""
-ROWS = CAT.strip().split("\n")
-BLACK, EYE, CLEAR = (17, 17, 17, 255), (255, 214, 0, 255), (0, 0, 0, 0)
+CAT = re.search(r"const SIT = `\n(.*?)`", open("ui/index.html").read(), re.S).group(1).strip().split("\n")
+COLORS = {"o": (0, 0, 0), "#": (35, 32, 40), "s": (74, 67, 82), "P": (248, 138, 124), "n": (164, 80, 94),
+          "m": (140, 32, 56), "t": (232, 80, 95), "r": (232, 169, 58), "k": (20, 18, 22), "W": (255, 255, 255)}
 
 
 def png(path, pixels):
@@ -32,19 +16,20 @@ def png(path, pixels):
                 + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b""))
 
 
-def render(scale, eyes, bg=CLEAR, pad=0):
-    color = {"#": BLACK, "Y": EYE if eyes else CLEAR, ".": bg}
-    n = 16 * scale + 2 * pad
-    out = [[bg] * n for _ in range(n)]
-    for y, row in enumerate(ROWS):
+def render(size, color, bg=(0, 0, 0, 0)):
+    """Котик по центру квадрата size×size, целый масштаб пикселя."""
+    scale = size * 3 // 4 // len(CAT[0])
+    ox, oy = (size - len(CAT[0]) * scale) // 2, (size - len(CAT) * scale) // 2
+    out = [[bg] * size for _ in range(size)]
+    for y, row in enumerate(CAT):
         for x, ch in enumerate(row):
-            for dy in range(scale):
-                for dx in range(scale):
-                    out[pad + y * scale + dy][pad + x * scale + dx] = color[ch]
+            c = color(ch)
+            if c:
+                for dy in range(scale):
+                    out[oy + y * scale + dy][ox + x * scale:ox + (x + 1) * scale] = [c] * scale
     return out
 
 
-root = sys.argv[1] if len(sys.argv) > 1 else "."
-png(f"{root}/ui/cat.png", render(4, eyes=True))
-png(f"{root}/src-tauri/icons/tray.png", render(2, eyes=False))  # template-иконка трея: только силуэт
-png(f"{root}/scripts/app-icon.png", render(48, eyes=True, bg=(242, 233, 216, 255), pad=128))
+# трей — template-силуэт: macOS сама красит под тему
+png("src-tauri/icons/tray.png", render(44, lambda ch: (0, 0, 0, 255) if ch != "." else None))
+png("scripts/app-icon.png", render(1024, lambda ch: COLORS[ch] + (255,) if ch != "." else None, (242, 233, 216, 255)))

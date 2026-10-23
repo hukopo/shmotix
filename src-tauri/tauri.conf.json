@@ -11,7 +11,7 @@
       {
         "label": "lens",
         "title": "Shmotix",
-        "width": 780, "height": 170, "x": 200, "y": 600,
+        "width": 800, "height": 180, "x": 200, "y": 600,
         "decorations": false, "transparent": true, "alwaysOnTop": true,
         "shadow": false, "resizable": true,
         "contentProtected": true

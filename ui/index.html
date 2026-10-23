@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <title>Shmotix</title>
 <style>
-  :root { --cat: 76px; --strip: 0px; }
+  :root { --cat: 112px; --strip: 0px; }
   html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; user-select: none;
                font-family: ui-rounded, system-ui, sans-serif; }
   body:not(.overlay) { --strip: 56px; }
   body.nocat { --cat: 0px; }
 
   /* рамка: еле видимая, скруглённая */
-  #lens { position: absolute; left: var(--cat); top: 0; right: 0; bottom: 0; border-radius: 18px;
+  #lens { position: absolute; left: 0; top: 0; right: var(--cat); bottom: 0; border-radius: 18px;
           border: 1px solid rgba(190, 190, 200, .28); transition: border-color .3s; }
   body:hover #lens { border-color: rgba(190, 190, 200, .6); }
   #hole { position: absolute; inset: 0 0 var(--strip) 0; border-radius: 18px; display: flex;
@@ -28,25 +28,40 @@
   body.collapsed #lens { display: none; }
 
   /* котик */
-  #pet { position: absolute; left: 6px; bottom: 4px; width: 64px; height: 64px; cursor: grab; }
+  #pet { position: absolute; right: 4px; bottom: 2px; width: 104px; height: 88px; cursor: grab; }
   body.nocat #pet { display: none; }
-  #pet canvas { width: 64px; height: 64px; image-rendering: pixelated; transform-origin: 50% 100%;
+  #pet canvas { width: 104px; height: 88px; image-rendering: pixelated; transform-origin: 50% 100%;
                 filter: drop-shadow(1px 0 #f4eee6) drop-shadow(-1px 0 #f4eee6) drop-shadow(0 1px #f4eee6)
                         drop-shadow(0 -1px #f4eee6) drop-shadow(0 2px 3px #0006); }
-  .sleep canvas { animation: breathe 2.4s ease-in-out infinite; }
-  .hop canvas { animation: hop .5s cubic-bezier(.3, 1.8, .5, 1); }
-  .stretch canvas { animation: stretch .8s ease-out; }
-  @keyframes breathe { 50% { transform: scale(1.04, .95); } }
-  @keyframes hop { 40% { transform: translateY(-14px) scale(.95, 1.08); } 80% { transform: scale(1.1, .9); } }
-  @keyframes stretch { 30% { transform: scale(1.25, .8); } 65% { transform: scale(.9, 1.12); } }
+  .sleep canvas   { animation: breathe 2.6s ease-in-out infinite; }
+  .hop canvas     { animation: hop .55s cubic-bezier(.3, 1.8, .5, 1); }
+  .stretch canvas { animation: stretch .9s ease-out; }
+  .tilt canvas    { animation: tilt 1.4s ease-in-out; }
+  .purr canvas    { animation: purr .09s linear 14; }
+  .loaf canvas    { animation: loaf 1.4s ease-in-out; }
+  .spin canvas    { animation: spin .7s ease-in-out; }
+  .zoomies canvas { animation: zoomies 1.3s ease-in-out; }
+  .wiggle canvas  { animation: wiggle .5s ease-in-out 2; }
+  @keyframes breathe { 50% { transform: scale(1.05, .94); } }
+  @keyframes hop     { 40% { transform: translateY(-18px) scale(.94, 1.1); } 80% { transform: scale(1.12, .88); } }
+  @keyframes stretch { 30% { transform: scale(1.3, .78); } 65% { transform: scale(.9, 1.14); } }
+  @keyframes tilt    { 25%, 75% { transform: rotate(-14deg); } }
+  @keyframes purr    { 50% { transform: translateX(1px); } }
+  @keyframes loaf    { 30%, 75% { transform: scale(1.18, .8); } }
+  @keyframes spin    { to { transform: rotateY(360deg); } }
+  @keyframes zoomies { 30% { transform: translateX(-30px) scaleX(-1); } 45% { transform: translateX(-30px) translateY(-10px) scaleX(-1); }
+                       70% { transform: translateX(6px); } }
+  @keyframes wiggle  { 25% { transform: rotate(6deg); } 75% { transform: rotate(-6deg); } }
 
-  .fx { position: absolute; pointer-events: none; font-weight: 700; animation: float 1.6s ease-out forwards; }
+  .fx { position: absolute; pointer-events: none; font-weight: 700; white-space: nowrap; animation: float 1.6s ease-out forwards; }
   .zz { color: #cfd8ff; font-size: 13px; text-shadow: 0 0 3px #0008; }
   .heart { color: #ff7aa8; font-size: 16px; text-shadow: 0 0 3px #0006; }
-  .meow { background: #fff; color: #222; font-size: 12px; padding: 3px 8px; border-radius: 12px;
-          box-shadow: 0 2px 6px #0004; animation-duration: 1.4s; }
+  .bubble { background: #fff; color: #2a2230; font-size: 13px; padding: 4px 10px; border-radius: 14px;
+            box-shadow: 0 2px 8px #0005; animation: pop 1.8s ease-out forwards; }
   @keyframes float { 0% { opacity: 0; transform: translate(0, 6px) scale(.6); } 20% { opacity: 1; transform: none; }
-                     100% { opacity: 0; transform: translate(10px, -26px) scale(1.1); } }
+                     100% { opacity: 0; transform: translate(-10px, -26px) scale(1.1); } }
+  @keyframes pop { 0% { opacity: 0; transform: scale(.4); } 12% { opacity: 1; transform: scale(1.08); }
+                   20% { transform: none; } 85% { opacity: 1; } 100% { opacity: 0; transform: translateY(-6px); } }
 </style>
 </head>
 <body class="overlay">
@@ -55,12 +70,15 @@
     <div id="strip">Наведи рамку на субтитры…</div>
     <span id="grip">◢</span>
   </div>
-  <div id="pet"><canvas id="cv" width="16" height="16"></canvas></div>
+  <div id="pet" title="тяни — двигать · клик — поиграть · зажми — мяу · двойной клик — свернуть">
+    <canvas id="cv" width="26" height="22"></canvas>
+  </div>
 <script>
   const { event, window: w, dpi, core } = window.__TAURI__;
   const win = w.getCurrentWindow();
   const $ = id => document.getElementById(id);
   const body = document.body, hole = $('hole'), say = $('say'), strip = $('strip'), pet = $('pet');
+  const pick = a => a[Math.random() * a.length | 0];
 
   /* ---------- перевод ---------- */
   let text = '', clearTimer;
@@ -101,22 +119,24 @@
   });
   addEventListener('keydown', e => e.key === 'Escape' && win.hide());
 
-  /* ---------- ресайз как прямоугольник в Paint: левый верхний угол — якорь ---------- */
+  /* ---------- ресайз как прямоугольник в Paint: левый верхний угол окна — якорь ---------- */
   const grip = $('grip');
   grip.onpointerdown = async e => {
-    e.stopPropagation();
     grip.setPointerCapture(e.pointerId);
-    const k = await win.scaleFactor(), p = await win.outerPosition();
-    const ax = p.x / k, ay = p.y / k;
+    const k = await win.scaleFactor();
+    const p = (await win.outerPosition()).toLogical(k), s = (await win.innerSize()).toLogical(k);
+    // угол окна правее/ниже курсора на ширину котика — сохраняем этот сдвиг
+    const dx = p.x + s.width - e.screenX, dy = p.y + s.height - e.screenY;
     grip.onpointermove = ev => {
-      win.setPosition(new dpi.LogicalPosition(Math.min(ax, ev.screenX), Math.min(ay, ev.screenY)));
-      win.setSize(new dpi.LogicalSize(Math.max(240, Math.abs(ev.screenX - ax)), Math.max(90, Math.abs(ev.screenY - ay))));
+      const x2 = ev.screenX + dx, y2 = ev.screenY + dy;
+      win.setPosition(new dpi.LogicalPosition(Math.min(p.x, x2), Math.min(p.y, y2)));
+      win.setSize(new dpi.LogicalSize(Math.max(260, Math.abs(x2 - p.x)), Math.max(100, Math.abs(y2 - p.y))));
     };
   };
   grip.onpointerup = () => { grip.onpointermove = null; };
 
   /* ---------- свернуть до котика: котик остаётся на месте, окно сжимается вокруг него ---------- */
-  const MINI = { w: 82, h: 110 };
+  const MINI = { w: 170, h: 140 };  // запас слева и сверху под пузырь «мяу»
   let saved = null;
   async function toggleCollapse() {
     const k = await win.scaleFactor();
@@ -125,10 +145,9 @@
       saved = { w: s.width, h: s.height };
       body.classList.add('collapsed');
       await win.setSize(new dpi.LogicalSize(MINI.w, MINI.h));
-      await win.setPosition(new dpi.LogicalPosition(p.x, p.y + s.height - MINI.h));
-      say.textContent = '';
+      await win.setPosition(new dpi.LogicalPosition(p.x + s.width - MINI.w, p.y + s.height - MINI.h));
     } else {
-      await win.setPosition(new dpi.LogicalPosition(p.x, p.y - (saved.h - s.height)));
+      await win.setPosition(new dpi.LogicalPosition(p.x - (saved.w - s.width), p.y - (saved.h - s.height)));
       await win.setSize(new dpi.LogicalSize(saved.w, saved.h));
       saved = null;
       body.classList.remove('collapsed');
@@ -137,107 +156,164 @@
     sendRegion();
   }
 
-  /* ---------- котик: пиксельные кадры ---------- */
-  // # шерсть, Y глаза, - закрытые глаза, P румянец/ротик, . прозрачно
+  /* ---------- котик: пиксельные кадры 26×22 (SIT читает scripts/make-cat.py для иконок) ---------- */
+  // o контур, # шерсть, s светлая шерсть, P розовый, n нос, m рот, t язык, r радужка, k зрачок, W блик
   const SIT = `
-................
-...#......#.....
-...##....##.....
-...########.....
-..##########....
-..##Y####Y##....
-..#P######P#....
-...########.....
-...########.....
-..##########....
-..##########..#.
-..##########..#.
-..##########.##.
-..############..
-...##.####.##...
-................`;
-  const lines = m => m.trim().split('\n');
-  const swap = (m, row, str) => lines(m).map((l, i) => i === row ? str : l).join('\n');
+...o...............o......
+..o#o.............o#o.....
+..o#Po...........oP#o.....
+.o#PPo...........oPP#o....
+.o#PPPoooooooooooPPP#o....
+.o###################o....
+.o##rrrrr#####rrrrr##o....
+.o#rWWkkkr###rWWkkkr#o....
+.o#rWWkkkr###rWWkkkr#o....
+.o#rkkkkkr###rkkkkkr#o....
+.o#rkkkWkr###rkkkWkr#o....
+.o##rrrrr##n##rrrrr##o....
+.o##PP#####m#####PP##o....
+..o#################o.....
+...o###############o..ooo.
+..o#################o.o##o
+.o###################oo##o
+.o###################o###o
+o#####################o##o
+o####################o##o.
+o######################o..
+.ooooooooooooooooooooooo..`;
+  const SLEEP = `
+..........................
+..........................
+..........................
+..........................
+..........................
+..........................
+..........................
+..........................
+..o.......o...............
+.o#o.....o#o..............
+.o#Po...oP#o..oooooooo....
+o#PP#ooo#PP#oo########oo..
+o######################o..
+o#######################o.
+o#r##r#r##r#############o.
+o##rr###rr##############o.
+o#P#####P###############o.
+o######oooooooooooo#####o.
+o#####osssssssssssso####o.
+.o####oooooooooooooo####o.
+..oooooooooooooooooooooo..
+..........................`;
+  const rows = m => m.trim().split('\n');
+  const edit = (m, patch) => rows(m).map((l, i) => patch[i] ?? l).join('\n');
+  const B = '.o###################o....', NOSE = '.o#########n#########o....';
+  const HAPPY = { 6: B, 7: B, 8: '.o####r#########r####o....', 9: '.o###r#r#######r#r###o....', 10: B, 11: NOSE };  // глазки ^ ^
   const F = {
     sit: SIT,
-    tail: [[9, '..##########...#'], [10, '..##########..#.'], [11, '..##########.#..'], [12, '..##########.#..']]
-            .reduce((m, [r, s]) => swap(m, r, s), SIT),
-    blink: swap(SIT, 5, '..##-####-##....'),
-    meow: swap(SIT, 7, '...###PP###.....'),
-    sleep: `
-................
-................
-................
-................
-................
-................
-...#.#..........
-...#########....
-..############..
-..#-#-#########.
-..#P#P#########.
-..#############.
-..##############
-...###########..
-................
-................`,
+    sleep: SLEEP,
+    blink: edit(SIT, { 6: B, 7: B, 8: B, 9: '.o#r#####r###r#####r#o....', 10: '.o##rrrrr#####rrrrr##o....', 11: NOSE }),
+    happy: edit(SIT, HAPPY),
+    meow: edit(SIT, { ...HAPPY, 12: '.o##PP####mmm####PP##o....', 13: '..o#######mtm#######o.....' }),
+    look: edit(SIT, { 7: '.o#rkkWWkr###rkkWWkr#o....', 8: '.o#rkkWWkr###rkkWWkr#o....', 10: '.o#rWkkkkr###rWkkkkr#o....' }),
+    ear: edit(SIT, { 0: '...o......................', 1: '..o#o.............ooo.....', 2: '..o#Po...........o##o.....' }),
+    lick1: edit(SIT, { ...HAPPY, 12: '.o##PP#####t#####PP##o....', 13: '..o########t########o.....' }),
+    lick2: edit(SIT, HAPPY),
+    tail: edit(SIT, { 14: '...o###############o.ooo..', 15: '..o#################oo##o.', 16: '.o###################o##o.',
+                      17: '.o###################o###o' }),
   };
-  const COLORS = { '#': '#17151a', Y: '#ffd400', '-': '#ffd400', P: '#ff8fb1' };
+  const COLORS = { o: '#000', '#': '#232028', s: '#4a4352', P: '#f88a7c', n: '#a4505e', m: '#8c2038', t: '#e8505f',
+                   r: '#e8a93a', k: '#141216', W: '#fff' };
   const ctx = $('cv').getContext('2d');
   function draw(name) {
-    ctx.clearRect(0, 0, 16, 16);
-    lines(F[name]).forEach((row, y) => [...row].forEach((ch, x) => {
+    ctx.clearRect(0, 0, 26, 22);
+    rows(F[name]).forEach((row, y) => [...row].forEach((ch, x) => {
       if (COLORS[ch]) { ctx.fillStyle = COLORS[ch]; ctx.fillRect(x, y, 1, 1); }
     }));
   }
 
-  /* ---------- котик: поведение ---------- */
-  let mood = 'sit', busyUntil = 0, lastPet = Date.now(), tick = 0;
-  function fx(cls, txt, dx = 34, dy = 4) {
+  /* ---------- котик: эффекты и действия ---------- */
+  function fx(cls, txt, dx = 30, dy = 6) {  // dx — от правого края котика влево
     const el = document.createElement('div');
     el.className = 'fx ' + cls; el.textContent = txt;
-    el.style.left = (6 + dx) + 'px'; el.style.bottom = (60 + dy) + 'px';
+    el.style.right = (6 + dx) + 'px'; el.style.bottom = (86 + dy) + 'px';
     body.appendChild(el);
-    setTimeout(() => el.remove(), 1700);
+    setTimeout(() => el.remove(), 1900);
   }
-  function play(cls, ms) {
-    pet.classList.remove('hop', 'stretch'); void pet.offsetWidth; pet.classList.add(cls);
-    setTimeout(() => pet.classList.remove(cls), ms);
+  let mood = 'sit', busyUntil = 0, lastPet = Date.now(), tick = 0, timers = [], lastAct = '';
+  // act: [[кадр, мс], ...] + css-анимация + эффект в начале
+  function act(frames, css, effect) {
+    timers.forEach(clearTimeout); timers = [];
+    pet.className = ''; void pet.offsetWidth;
+    if (css) pet.classList.add(css);
+    let t = 0;
+    for (const [f, ms] of frames) { timers.push(setTimeout(() => draw(f), t)); t += ms; }
+    timers.push(setTimeout(() => { pet.className = ''; draw('sit'); }, t));
+    busyUntil = Date.now() + t;
+    effect?.();
+  }
+  const loop = (a, b, n, ms) => Array.from({ length: n * 2 }, (_, i) => [i % 2 ? b : a, ms]);
+  const PHRASES = ['мяу!', 'мрр~', 'ня~', 'мур-мур-мур', 'кушать?', 'погладь ещё', 'мяяяяу', 'фрр!', '=^.^=',
+                   'я тут главный', 'переведу за вкусняшку', 'ммм… субтитры', 'мяу?', 'не трогай хвост!'];
+  const REACTIONS = {
+    hop:     () => act([['happy', 550]], 'hop', () => fx('heart', '♥', 20 + Math.random() * 30)),
+    tilt:    () => act([['look', 700], ['sit', 300], ['look', 400]], 'tilt', () => fx('bubble', '?', 10)),
+    lick:    () => act(loop('lick1', 'lick2', 4, 220), null),
+    ear:     () => act(loop('ear', 'sit', 3, 160), 'wiggle'),
+    purr:    () => act([['happy', 1300]], 'purr', () => fx('bubble', pick(['мрр~', 'муррр', 'прр-прр']), 10)),
+    loaf:    () => act([['blink', 400], ['happy', 1000]], 'loaf', () => fx('zz', '…', 30)),
+    spin:    () => act([['happy', 700]], 'spin', () => fx('heart', '✦', 40)),
+    zoomies: () => act([['tail', 300], ['sit', 300], ['tail', 300], ['happy', 400]], 'zoomies', () => fx('zz', 'ж-ж-ж!', 50)),
+  };
+  function react() {  // клик — случайная реакция, не повторяем подряд
+    const k = pick(Object.keys(REACTIONS).filter(r => r !== lastAct));
+    lastAct = k; REACTIONS[k]();
+  }
+  function meow() {  // долгое нажатие — мяукает разными фразами
+    act([['meow', 260], ['happy', 200], ['meow', 260], ['happy', 400]], 'wiggle', () => fx('bubble', pick(PHRASES), 10));
   }
   function wake() {
     lastPet = Date.now();
     if (mood !== 'sleep') return;
-    mood = 'sit'; pet.classList.remove('sleep');
-    busyUntil = Date.now() + 1200; draw('meow');
-    play('stretch', 800); fx('meow', ['мяу~', 'мя?', 'ня!'][Math.random() * 3 | 0], 30, 2);
+    mood = 'sit';
+    act([['blink', 300], ['meow', 500], ['happy', 400]], 'stretch', () => fx('bubble', pick(['мяу~', 'мя?', 'ня!', '*зевает*']), 10));
   }
-  function cheer() {  // новый перевод — котик подпрыгивает
-    if (mood === 'sleep' || Date.now() < busyUntil) return;
-    play('hop', 500); fx('heart', '♥', 20 + Math.random() * 30);
+  let lastCheer = 0;
+  function cheer() {  // новый перевод — котик радуется, но не чаще раза в 4 с
+    if (mood === 'sleep' || Date.now() < busyUntil || Date.now() - lastCheer < 4000) return;
+    lastCheer = Date.now(); REACTIONS.hop();
   }
   setInterval(() => {
     tick++;
     const now = Date.now();
-    if (mood === 'sleep') { if (tick % 5 === 0) fx('zz', tick % 10 ? 'z' : 'Z', 40, 0); return; }
-    if (now - lastPet > (body.classList.contains('collapsed') ? 8000 : 25000)) {
-      mood = 'sleep'; pet.classList.add('sleep'); draw('sleep'); return;  // клубочком
-    }
+    if (mood === 'sleep') { if (tick % 5 === 0) fx('zz', tick % 10 ? 'z' : 'Z', 10, -20); return; }
     if (now < busyUntil) return;
-    draw(Math.random() < .12 ? 'blink' : tick % 2 ? 'tail' : 'sit');
+    if (now - lastPet > (body.classList.contains('collapsed') ? 10000 : 30000)) {
+      mood = 'sleep'; pet.className = 'sleep'; draw('sleep'); return;  // свернулся клубочком
+    }
+    if (tick % 18 === 0) return pick([REACTIONS.lick, REACTIONS.ear, () => act([['look', 900]])])();  // сам себя развлекает
+    draw(Math.random() < .1 ? 'blink' : tick % 2 ? 'tail' : 'sit');
   }, 450);
   draw('sit');
 
-  /* ---------- котик: мышь. Тянуть — двигает окно, клик — свернуть/развернуть ---------- */
+  /* ---------- котик: мышь. Тянуть — двигать окно, клик — играть, зажать — мяу, двойной клик — свернуть ---------- */
+  let clickTimer = null;
   pet.onpointerenter = wake;
   pet.onpointerdown = e => {
+    wake();
     const sx = e.screenX, sy = e.screenY;
-    let dragged = false;
+    let dragged = false, held = false;
+    const holdTimer = setTimeout(() => { held = true; meow(); }, 500);
     pet.onpointermove = ev => {
-      if (!dragged && Math.hypot(ev.screenX - sx, ev.screenY - sy) > 4) { dragged = true; win.startDragging(); }
+      if (!dragged && Math.hypot(ev.screenX - sx, ev.screenY - sy) > 4) {
+        dragged = true; clearTimeout(holdTimer); win.startDragging();
+      }
     };
     pet.onpointerup = () => {
       pet.onpointermove = pet.onpointerup = null;
-      if (!dragged) { toggleCollapse(); play('hop', 500); }
+      clearTimeout(holdTimer);
+      if (dragged || held) return;
+      if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; toggleCollapse(); return; }
+      clickTimer = setTimeout(() => { clickTimer = null; react(); }, 260);
     };
   };
 </script>
