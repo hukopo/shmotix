@@ -17,9 +17,7 @@ jobs:
     env:
       TAG: ${{ github.event.release.tag_name || inputs.tag }}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ env.TAG }}
+      - uses: actions/checkout@v4  # релиз — код тега, ручной запуск — main
       - uses: dtolnay/rust-toolchain@stable
       - uses: actions/setup-node@v4
         with:
