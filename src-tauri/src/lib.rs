@@ -31,12 +31,16 @@ fn grab(win: &WebviewWindow) -> anyhow::Result<image::RgbImage> {
 }
 
 pub fn run() {
-    let models = std::env::var("SHMOTIX_MODELS").map(PathBuf::from).unwrap_or_else(|_| "../models".into());
     let pair = std::env::var("SHMOTIX_PAIR").unwrap_or_else(|_| "en_ru".into());
 
     tauri::Builder::default()
         .setup(move |app| {
             let win = app.get_webview_window("lens").unwrap();
+            // модели лежат внутри бандла (bundle.resources), env — чтобы подсунуть свои
+            let models = match std::env::var("SHMOTIX_MODELS") {
+                Ok(p) => PathBuf::from(p),
+                Err(_) => app.path().resource_dir()?.join("models"),
+            };
             let mut engine = engine::Engine::new(&models, &pair)
                 .map_err(|e| format!("модели не найдены в {models:?} (запусти scripts/fetch-models.sh): {e}"))?;
             thread::spawn(move || loop {

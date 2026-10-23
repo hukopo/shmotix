@@ -17,5 +17,12 @@
       }
     ]
   },
-  "bundle": { "active": true, "targets": "all", "icon": ["icons/32x32.png","icons/128x128.png","icons/icon.icns","icons/icon.ico"] }
+  "bundle": {
+    "active": true, "targets": "all",
+    "resources": {
+      "../models/text-detection.rten": "models/text-detection.rten",
+      "../models/text-recognition.rten": "models/text-recognition.rten",
+      "../models/en_ru/sentencepiece.model": "models/en_ru/sentencepiece.model",
+      "../models/en_ru/model/": "models/en_ru/model/"
+    }, "icon": ["icons/32x32.png","icons/128x128.png","icons/icon.icns","icons/icon.ico"] }
 }
